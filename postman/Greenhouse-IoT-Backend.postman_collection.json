@@ -1,0 +1,534 @@
+{
+  "info": {
+    "_postman_id": "68c14e55-b12e-4b7d-b34b-5a702a5c8598",
+    "name": "Greenhouse IoT Backend",
+    "description": "Complete happy-path, validation, dependency-failure, and recovery checks for the Greenhouse IoT Backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.collectionVariables.set('current_timestamp', new Date().toISOString());"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Basic and Health",
+      "item": [
+        {
+          "name": "Root - Backend Running",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Backend running message', () => {",
+                  "  pm.expect(pm.response.json().message).to.eql('Greenhouse IoT Backend is running');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Status - Healthy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('All services healthy', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('healthy');",
+                  "  pm.expect(body.services).to.deep.eql({ backend: 'up', database: 'connected', mqtt: 'connected' });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Sensor Data",
+      "item": [
+        {
+          "name": "Sensor - Valid",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{sensor_device_id}}\",\n  \"temperature\": 28.5,\n  \"humidity\": 71.2,\n  \"timestamp\": \"{{current_timestamp}}\"\n}"
+            },
+            "url": "{{base_url}}/sensor-data"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Reading stored', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.id).to.be.a('number').and.above(0);",
+                  "  pm.collectionVariables.set('sensor_reading_id', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sensor - Empty Device ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"   \",\n  \"temperature\": 28.5,\n  \"humidity\": 71.2,\n  \"timestamp\": \"{{current_timestamp}}\"\n}"
+            },
+            "url": "{{base_url}}/sensor-data"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Validation error', () => pm.expect(pm.response.json().error.code).to.eql('VALIDATION_ERROR'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sensor - Humidity Above 100",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{sensor_device_id}}\",\n  \"temperature\": 28.5,\n  \"humidity\": 101,\n  \"timestamp\": \"{{current_timestamp}}\"\n}"
+            },
+            "url": "{{base_url}}/sensor-data"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Humidity rejected', () => {",
+                  "  const error = pm.response.json().error;",
+                  "  pm.expect(error.code).to.eql('VALIDATION_ERROR');",
+                  "  pm.expect(error.details.some(item => item.field === 'body.humidity')).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sensor - Temperature as String",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{sensor_device_id}}\",\n  \"temperature\": \"28.5\",\n  \"humidity\": 71.2,\n  \"timestamp\": \"{{current_timestamp}}\"\n}"
+            },
+            "url": "{{base_url}}/sensor-data"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Numeric string rejected', () => pm.expect(pm.response.json().error.code).to.eql('VALIDATION_ERROR'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sensor - Invalid Timestamp",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{sensor_device_id}}\",\n  \"temperature\": 28.5,\n  \"humidity\": 71.2,\n  \"timestamp\": \"not-a-timestamp\"\n}"
+            },
+            "url": "{{base_url}}/sensor-data"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Timestamp rejected', () => pm.expect(pm.response.json().error.code).to.eql('VALIDATION_ERROR'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sensor - Malformed JSON",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"device_id\": \"broken\""
+            },
+            "url": "{{base_url}}/sensor-data"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Malformed JSON uses common envelope', () => pm.expect(pm.response.json().error.code).to.eql('VALIDATION_ERROR'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Device Control",
+      "item": [
+        {
+          "name": "Device - ON",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{control_device_id}}\",\n  \"command\": \"ON\"\n}"
+            },
+            "url": "{{base_url}}/device-control"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('ON command acknowledged', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.command).to.eql('ON');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Device - OFF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{control_device_id}}\",\n  \"command\": \"OFF\"\n}"
+            },
+            "url": "{{base_url}}/device-control"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('OFF command acknowledged', () => pm.expect(pm.response.json().data.command).to.eql('OFF'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Device - Invalid START Command",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{control_device_id}}\",\n  \"command\": \"START\"\n}"
+            },
+            "url": "{{base_url}}/device-control"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Unsupported command rejected', () => pm.expect(pm.response.json().error.code).to.eql('VALIDATION_ERROR'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Device - Missing Device ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"ON\"\n}"
+            },
+            "url": "{{base_url}}/device-control"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Missing device rejected', () => pm.expect(pm.response.json().error.code).to.eql('VALIDATION_ERROR'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Dependency Failure (run manually)",
+      "description": "Run these requests only after stopping the named dependency as described in POSTMAN_GUIDE.md.",
+      "item": [
+        {
+          "name": "Status - MQTT Down",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('MQTT degraded', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('degraded');",
+                  "  pm.expect(body.services.database).to.eql('connected');",
+                  "  pm.expect(body.services.mqtt).to.eql('disconnected');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Device - MQTT Down",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{control_device_id}}\",\n  \"command\": \"ON\"\n}"
+            },
+            "url": "{{base_url}}/device-control"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 503', () => pm.response.to.have.status(503));",
+                  "pm.test('MQTT unavailable error', () => pm.expect(pm.response.json().error.code).to.eql('MQTT_UNAVAILABLE'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Status - Database Down",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Database degraded', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('degraded');",
+                  "  pm.expect(body.services.database).to.eql('disconnected');",
+                  "  pm.expect(body.services.mqtt).to.eql('connected');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sensor - Database Down",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{sensor_device_id}}\",\n  \"temperature\": 28.5,\n  \"humidity\": 71.2,\n  \"timestamp\": \"{{current_timestamp}}\"\n}"
+            },
+            "url": "{{base_url}}/sensor-data"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 503', () => pm.response.to.have.status(503));",
+                  "pm.test('Database unavailable error', () => pm.expect(pm.response.json().error.code).to.eql('DATABASE_UNAVAILABLE'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Status - Recovered",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('System recovered', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('healthy');",
+                  "  pm.expect(body.services.database).to.eql('connected');",
+                  "  pm.expect(body.services.mqtt).to.eql('connected');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "current_timestamp",
+      "value": ""
+    },
+    {
+      "key": "sensor_reading_id",
+      "value": ""
+    }
+  ]
+}
