@@ -8,7 +8,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from mqtt.client import MQTTClient
 from schemas.health_sch import HealthResponse, ServiceStatuses
 
-
 logger = logging.getLogger(__name__)
 
 

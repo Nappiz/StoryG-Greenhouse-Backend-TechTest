@@ -2,7 +2,7 @@
 
 import json
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from mqtt.client import MQTTClient
 from schemas.device_sch import (
@@ -14,7 +14,7 @@ from schemas.device_sch import (
 
 def utc_now() -> datetime:
     """Return the current timezone-aware UTC time."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class DeviceService:
@@ -33,7 +33,7 @@ class DeviceService:
         command: DeviceControlRequest,
     ) -> DeviceControlResponse:
         topic = f"greenhouse/control/{command.device_id}"
-        timestamp = self._clock().astimezone(timezone.utc)
+        timestamp = self._clock().astimezone(UTC)
         event = {
             "device_id": command.device_id,
             "command": command.command,

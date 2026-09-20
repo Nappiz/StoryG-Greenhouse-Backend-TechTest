@@ -9,7 +9,6 @@ import paho.mqtt.client as mqtt
 
 from core.exceptions import MQTTUnavailableError
 
-
 logger = logging.getLogger(__name__)
 
 

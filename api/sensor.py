@@ -11,7 +11,6 @@ from schemas.error_sch import ErrorResponse
 from schemas.sensor_sch import SensorDataRequest, SensorDataResponse
 from services.sensor_service import SensorService
 
-
 router = APIRouter(tags=["Sensors"])
 
 

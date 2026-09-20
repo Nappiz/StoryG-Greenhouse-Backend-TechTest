@@ -14,7 +14,6 @@ from database.base import Base
 from database.connection import get_db_session
 from database.models import SensorReading
 
-
 test_engine = create_engine(
     "sqlite+pysqlite:///:memory:",
     connect_args={"check_same_thread": False},

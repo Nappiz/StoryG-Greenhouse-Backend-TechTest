@@ -32,14 +32,10 @@ class SensorDataRequest(BaseModel):
 
 
 class StoredSensorData(BaseModel):
-
     id: int = Field(gt=0)
 
 
 class SensorDataResponse(BaseModel):
-
     success: Literal[True] = True
-    message: Literal["Sensor data stored successfully"] = (
-        "Sensor data stored successfully"
-    )
+    message: Literal["Sensor data stored successfully"] = "Sensor data stored successfully"
     data: StoredSensorData

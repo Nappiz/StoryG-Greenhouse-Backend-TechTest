@@ -10,7 +10,6 @@ from mqtt.client import MQTTClient
 from schemas.health_sch import HealthResponse
 from services.health_service import HealthService
 
-
 router = APIRouter(tags=["System"])
 
 

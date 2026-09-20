@@ -4,7 +4,6 @@ from typing import Annotated
 
 from pydantic import StringConstraints
 
-
 DeviceId = Annotated[
     str,
     StringConstraints(

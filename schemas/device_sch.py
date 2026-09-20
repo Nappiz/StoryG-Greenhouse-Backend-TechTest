@@ -17,13 +17,11 @@ class DeviceControlRequest(BaseModel):
 
 
 class PublishedDeviceCommand(BaseModel):
-
     device_id: str
     command: Literal["ON", "OFF"]
 
 
 class DeviceControlResponse(BaseModel):
-
     success: Literal[True] = True
     message: Literal["Device control command published successfully"] = (
         "Device control command published successfully"

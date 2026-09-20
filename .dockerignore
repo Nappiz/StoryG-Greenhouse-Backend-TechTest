@@ -5,9 +5,13 @@
 __pycache__
 *.py[cod]
 .pytest_cache
+.ruff_cache
 .coverage
 htmlcov
 .idea
 .vscode
 *.log
 README*.pdf
+.presentation-build
+.codex-finalizer
+output

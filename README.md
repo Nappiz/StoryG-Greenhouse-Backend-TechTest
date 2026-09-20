@@ -64,12 +64,21 @@ Sensor ingestion and device control intentionally use different paths:
 |-- scripts/                # Independent database/MQTT diagnostics
 |-- tests/                  # Automated tests
 |-- mosquitto/              # Local broker configuration
+|-- postman/                # Importable collection and local environment
+|-- output/                 # Submission presentation in PPTX and PDF
 |-- API_CONTRACT.md         # Frozen request/response contract
 |-- DESIGN_DECISIONS.md     # Architectural rationale and trade-offs
+|-- POSTMAN_GUIDE.md        # Manual API testing walkthrough
 |-- Dockerfile              # Backend image
 |-- docker-compose.yml      # Backend, PostgreSQL, Mosquitto
-`-- requirements.txt        # Python dependencies
+|-- requirements.txt        # Runtime and test dependencies
+`-- requirements-dev.txt    # Local linting dependencies
 ```
+
+## Submission presentation
+
+- Editable deck: `output/presentation/Greenhouse_IoT_Backend_Technical_Presentation_Submission.pptx`
+- Required PDF: `output/pdf/Greenhouse_IoT_Backend_Technical_Presentation_Final.pdf`
 
 ## Quick start for reviewers
 
@@ -368,7 +377,9 @@ Or run locally with Python 3.11+:
 
 ```bash
 python -m venv .venv
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
+ruff format --check .
+ruff check .
 pytest -q
 ```
 

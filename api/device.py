@@ -10,7 +10,6 @@ from schemas.device_sch import DeviceControlRequest, DeviceControlResponse
 from schemas.error_sch import ErrorResponse
 from services.device_service import DeviceService
 
-
 router = APIRouter(tags=["Devices"])
 
 

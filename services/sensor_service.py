@@ -9,7 +9,6 @@ from core.exceptions import DatabaseOperationError
 from repositories.sensor_repository import SensorRepository
 from schemas.sensor_sch import SensorDataRequest, SensorDataResponse, StoredSensorData
 
-
 logger = logging.getLogger(__name__)
 
 
