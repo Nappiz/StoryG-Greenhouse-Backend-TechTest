@@ -77,8 +77,8 @@ Sensor ingestion and device control intentionally use different paths:
 
 ## Submission presentation
 
-- Editable deck: `output/presentation/Greenhouse_IoT_Backend_Technical_Presentation_Submission.pptx`
-- Required PDF: `output/pdf/Greenhouse_IoT_Backend_Technical_Presentation_Final.pdf`
+- Canva-editable deck: `output/presentation/Greenhouse_IoT_Backend_Canva_Editable.pptx`
+- Required PDF: `output/pdf/Greenhouse_IoT_Backend_Presentation.pdf`
 
 ## Quick start for reviewers
 

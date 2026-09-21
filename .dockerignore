@@ -14,4 +14,6 @@ htmlcov
 README*.pdf
 .presentation-build
 .codex-finalizer
+.pitch-build
+.pitch-finalizer
 output

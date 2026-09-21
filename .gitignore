@@ -17,3 +17,5 @@ htmlcov/
 *.sqlite3
 .presentation-build/
 .codex-finalizer/
+.pitch-build/
+.pitch-finalizer/
